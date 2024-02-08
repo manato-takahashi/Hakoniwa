@@ -34,25 +34,44 @@ public class PlayerController : MonoBehaviour
 
     void AssignInputs()
     {
-        input.Main.Move.performed += ctx => ClickToMove();
+        // タップまたはクリック時にClickToMoveメソッドが呼ばれるように設定
+        input.Main.Move.performed += ctx => ClickToMove(ctx);
     }
 
-    void ClickToMove()
+    void ClickToMove(InputAction.CallbackContext context)
     {
+        // タッチまたはクリックの位置を取得
+        Vector2 position = Mouse.current.position.ReadValue();
+        if (Touchscreen.current != null && Touchscreen.current.press.isPressed)
+        {
+            position = Touchscreen.current.primaryTouch.position.ReadValue();
+        }
+
+        // スクリーンポイントからレイを生成
+        Ray ray = Camera.main.ScreenPointToRay(position);
+
         RaycastHit hit;
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100, clickableLayers)) 
+        if (Physics.Raycast(ray, out hit, 100, clickableLayers)) 
         {
             agent.destination = hit.point;
             if(clickEffect != null)
-            { Instantiate(clickEffect, hit.point + new Vector3(0, 0.1f, 0), clickEffect.transform.rotation); }
+            {
+                Instantiate(clickEffect, hit.point + new Vector3(0, 0.1f, 0), Quaternion.identity);
+            }
         }
     }
 
     void OnEnable() 
-    { input.Enable(); }
+    {
+        // Input Systemを有効に
+        input.Enable();
+    }
 
     void OnDisable() 
-    { input.Disable();}
+    {
+        // Input Systemを無効に
+        input.Disable();
+    }
 
     void FaceTarget()
     {
